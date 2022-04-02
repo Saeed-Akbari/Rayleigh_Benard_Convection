@@ -1,0 +1,5 @@
+#!/bin/bash
+
+cp ./../FOM/config/cases/$1.yaml ./../FOM/config/rbc_parameters.yaml
+
+

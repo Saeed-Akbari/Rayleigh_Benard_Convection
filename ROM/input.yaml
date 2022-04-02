@@ -1,0 +1,155 @@
+
+# 'cae' mode for training Autoencoder, 'lstm' mode for training lstm after autoencoder,
+# 'pod' mode for training lstm based on POD, 'caeTest' mode for testing autoencoder,
+# 'lstmTest' mode for testing AE-LSTM, and 'podTest' mode for testing POD-LSTM
+mode : 'podAE'  #   ae, aeTest, lstm, lstmTest, pod, podTest, podAE, podAEtest
+var : 'Temperature'         # Psi for modeling streamfunction and Temperature for modeling temperature      Psi     Temperature
+
+# The entire data set can be larger than training and test set.
+# Here I can choose a range for training set and another range for test set.
+# The real times may be one time step larger or smaller than the selected times.
+trainStartTime : 0      # training starts from trainStartTime
+trainEndTime : 152        # training ends at trainEndTime
+testStartTime : 148       # test starts from testStartTime
+testEndTime : 200         # test ends at testEndTime
+figTimeTest : [195, 199]  # Choosing some times to plot the resutls
+
+timeStep : 0.1            # afte discarding in the FOM run
+
+# Autoencoder hyperparameters
+AE:
+  epochsCAE : 200        # number of epochs   t:0.01 300 200 100
+  batchSizeCAE : 128       # batch size
+  LrateCAE : 1e-5         # learnig rate
+  AEmode : 9             # number of AE modes
+  px : 3                  # dimension of the plot for modes evolution. px * py should be equal to number of modes
+  py : 3
+  numChannel : 1          # number of channel for convolution part of the AE (more than 1 channel is not implemented yet)
+  sn : 1                  # train AE on the 100/sn % of the trainig set and discard the rest of it
+  cae_seed : 43           #
+
+  # LSTM hyperparameters
+  epochsLSTM : 1000       # number of epochs  t:0.01 400 300
+  batchSizeLSTM : 32     # batch size
+  LrateLSTM : 1e-5        # learning rate
+  validationLSTM : 0.2
+  windowSize : 5          # window size or look back size
+  timeScale : 1          # scaling time step or number of snapshots. the larger timeScale the less snapshots
+  numLstmNeu : [64, 64]   # it doesn't work. number of LSTM neurons must be written in LSTM.py
+  # number of LSTM neurons in each layer. Adding the numbers will add the number of layers.
+  # Number of neuron in the last layer, which a fully-connected layer, is the number of modes.
+  # If the below error is raised, reduce the timeScale
+  # ValueError: negative dimensions are not allowed
+  lstm_seed : 43            #
+  #lx : [6.4, 8.0]          # probe location on x direction for temperature
+  #ly : [0.4, 0.6]           # probe location on y direction for temperature
+  lx : [4, 5.8]          # for psi
+  ly : [1.2, 2.8]           # for psi
+
+  #''' 512*256 mesh  '''
+  encoderFilters : [4, 8, 16, 32, 64, 128]        # encoderFilters[i] is the number of filters for i th layer of the encoding part.
+  encoderPoolSize : [[2, 2], [2, 2], [2, 2], [2, 2], [2, 2], [2, 2]] # pooling size for max pooling in encoder
+  encoderStride : [[1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1]] # stride for height and width in every layer of the encoder
+  encoderDense : [256]        # number of neurons for layers of the MLP in encoder after convolutional part
+  decoderDense : [256, 4096]        # number of neurons for layers of the MLP in decoder before convolutional part
+  decoderReshape : [8, 4, 128]      # reshape the output of the first layer of the MLP in decoder to make them have a suitable shape for convolutional part
+  decoderFilters : [128, 64, 32, 16, 8, 4]   # decoderFilters[i] is the number of filters for i th layer of the decoding part.
+  decoderPoolSize : [[2, 2], [2, 2], [2, 2], [2, 2], [2, 2], [2, 2]] # pooling size for upscaling in decoder
+  decoderStride : [[1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1]] # stride for height and width in every layer of the decoder
+
+POD:
+  PODmode : 3             # number of POD modes
+  px : 1
+  py : 3
+  epochsLSTM : 800
+  batchSizeLSTM : 64
+  LrateLSTM : 1e-5
+  validationLSTM : 0.2
+  windowSize : 5
+  timeScale : 10
+  numLstmNeu : [64, 64]
+  lstm_seed : 43
+  #lx : [6.4, 8.0]
+  #ly : [0.4, 0.6]
+  lx : [4, 5.8]          # for psi
+  ly : [1.2, 2.8]           # for psi
+
+POD-AE:
+
+  podContent : False
+
+  epochsCAE : 750
+  batchSizeCAE : 64
+  LrateCAE : 1e-3
+  AEmode : 8          # 2e6 -> 2, 9e6 -> 4
+  #PODmode : 454        # 2e6 -> 16, 11, 76.87, 9e6 -> 151, 79, 64.24
+  px : 4
+  py : 1
+  numChannel : 1
+  sn : 1
+  cae_seed : 43
+
+  epochsLSTM : 600       # number of epochs  t:0.01 400 300      2e6 -> 180, 9e6 -> 1000
+  batchSizeLSTM : 64     # batch size
+  LrateLSTM : 1e-3        # learning rate
+  validationLSTM : 0.2
+  windowSize : 5          # window size or look back size
+  timeScale : 10          # scaling time step or number of snapshots. the larger timeScale the less snapshots
+  numLstmNeu : [64, 64]   # it doesn't work for now. number of LSTM neurons must be written in LSTM.py
+  # number of LSTM neurons in each layer. Adding the numbers will add the number of layers.
+  # Number of neuron in the last layer, which a fully-connected layer, is the number of modes.
+  # If the below error is raised, reduce the timeScale
+  # ValueError: negative dimensions are not allowed
+  lstm_seed : 43            #
+  #lx : [6.4, 8.0]          # probe location on x direction for temperature
+  #ly : [0.4, 0.6]           # probe location on y direction for temperature
+  lx : [4, 5.8]          # for psi
+  ly : [1.2, 2.8]           # for psi
+
+#''' 1D MLP with PODmodes 1030 input  '''
+  encoderDenseMLP : [512, 64]
+
+#''' 1D convolution with PODmodes 79 input  '''
+  encoderFilters : [4]        # encoderFilters[i] is the number of filters for i th layer of the encoding part.
+  encoderPoolSize : [2] # pooling size for max pooling in encoder
+  encoderStride : [1] # stride for height and width in every layer of the encoder
+  encoderDense : [512, 64, 16]        # number of neurons for layers of the MLP in encoder after convolutional part
+  decoderDense : [16, 64, 512, 908]        # number of neurons for layers of the MLP in decoder before convolutional part
+  decoderReshape : [227, 4]      # reshape the output of the first layer of the MLP in decoder to make them have a suitable shape for convolutional part
+  decoderFilters : [4]   # decoderFilters[i] is the number of filters for i th layer of the decoding part.
+  decoderPoolSize : [2] # pooling size for upscaling in decoder
+  decoderStride : [1] # stride for height and width in every layer of the decoder
+
+
+#''' 1D convolution with PODmodes input  '''
+  #encoderFilters : [4]        # encoderFilters[i] is the number of filters for i th layer of the encoding part.
+  #encoderPoolSize : [2] # pooling size for max pooling in encoder
+  #encoderStride : [1] # stride for height and width in every layer of the encoder
+  #encoderDense : [8]        # number of neurons for layers of the MLP in encoder after convolutional part
+  #decoderDense : [8, 28]        # number of neurons for layers of the MLP in decoder before convolutional part
+  #decoderReshape : [7, 4]      # reshape the output of the first layer of the MLP in decoder to make them have a suitable shape for convolutional part
+  #decoderFilters : [4]   # decoderFilters[i] is the number of filters for i th layer of the decoding part.
+  #decoderPoolSize : [2] # pooling size for upscaling in decoder
+  #decoderStride : [1] # stride for height and width in every layer of the decoder
+
+#''' 64*32 mesh  '''
+#encoderFilters : [16, 8]        # encoderFilters[i] is the number of filters for i th layer of the encoding part.
+#encoderPoolSize : [[2, 2], [2, 2]]
+#encoderStride : [[1, 1], [1, 1]]
+#encoderDense : [512, 64]        # number of neurons for layers of the MLP in encoder after convolutional part
+#decoderDense : [64, 256]        # number of neurons for layers of the MLP in decoder before convolutional part
+#decoderReshape : [8, 4, 8]      # reshape the output of the first layer of the MLP in decoder to make them have a suitable shape for convolutional part
+#decoderFilters : [16, 32, 64]   # decoderFilters[i] is the number of filters for i th layer of the decoding part.
+#decoderPoolSize : [[2, 2], [2, 2], [2, 2]]
+#decoderStride : [[1, 1], [1, 1], [1, 1]]
+
+#''' 64*64 mesh  
+#encoderFilters = [16, 8]
+#encoderDense = [1024, 128]
+#decoderDense = [128, 512]
+#decoderReshape = (8, 8, 8)
+#decoderFilters = [16, 32, 64]
+#'''
+
+
+  
